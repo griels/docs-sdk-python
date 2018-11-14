@@ -273,7 +273,7 @@ Most data access methods will return an [.api]`ValueResult`-like object with the
 
 [source,python]
 ----
-bucket.list_get(0).value  # 'hello'
+bucket.list_get('fred',0).value  # 'hello'
 bucket.map_get('map_id', 'name').value  # 'mark nunberg'
 ----
 
