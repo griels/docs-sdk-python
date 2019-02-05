@@ -8,15 +8,15 @@ http://developer.couchbase.com/documentation/server/4.5/sdk/python/start-using-s
 
 [source,bash]
 ----
-pip install git+https://github.com/couchbase/couchbase-python-client@VERSION
+pip install couchbase==VERSION
 ----
 
 where VERSION is the version you wish to install. For example, to
-install version 2.0.8:
+install version 2.4.1:
 
 [source,bash]
 ----
-pip install git+http://github.com/couchbase/couchbase-python-client@2.0.8
+pip install couchbase==2.4.1
 ----
 
 == Python SDK 2.5.1 Release Notes (November 6 2018)
