@@ -1,5 +1,3 @@
-import threading
-from couchbase.collection import Collection
 import couchbase.subdocument as SD
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase_core.cluster import PasswordAuthenticator
@@ -18,9 +16,10 @@ def get(self):
     country = result.content_as[str](0)  # type: str
     # #end::get[]
 
+
 def exists(self):
     # #tag::exists[]
-    result = await _collection.lookup_in("customer123",
+    result = _collection.lookup_in("customer123",
         SD.exists("addresses.delivery.does_not_exist")
     )
 
@@ -78,7 +77,7 @@ def array_prepend(self):
         SD.array_prepend("purchases.abandoned", 18))
 
     # purchases.abandoned is now [18, 157, 49, 999]
-# #end::array-prepend[]
+    # #end::array-prepend[]
 
 
 def create_and_populate_arrays(self):
@@ -148,7 +147,7 @@ def create_path(self):
 def cas(self):
     # #tag::cas[]
     player = _collection.Get("player432")
-    _collection.mutate_in("player432",
+    _collection.mutate_in("player432", SD.counter("gold", -150),
        cas=player.cas
     )
     # #end::cas[]
