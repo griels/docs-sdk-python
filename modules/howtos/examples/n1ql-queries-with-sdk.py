@@ -1,3 +1,4 @@
+"""
 = N1QL Queries from the SDK
 :navtitle: N1QL from the SDK
 :page-topic-type: howto
@@ -43,28 +44,26 @@ Note that both parameters and options are optional.
 .Positional parameter example:
 [source,python]
 ----
-var parameters = new QueryParameters()
-    .Add("User");
-var options = new QueryOptions();
-var result = await collection.Query<dynamic>(
-    "SELECT x.* FROM `default` WHERE x.Type=$1",
-    parameters,
-    options
-);
+"""
+from couchbase import QueryParameters
+from couchbase.cluster import Cluster
+cluster=Cluster()
+#tag: PositionalQuery[]
+result = cluster.query("SELECT x.* FROM `default` WHERE x.Type=$1","User")
+#end: PositionalQuery[]
+"""
 ----
 
 .Named parameter example:
 [source,python]
 ----
-var parameters = new QueryParameters()
-    .Add("type", "User");
+"""
+parameters = new QueryParameters()
+.Add("type", "User");
 var options = new QueryOptions();
 
-var result = await collection.Query<dynamic>(
-    "SELECT x.* FROM `default` WHERE x.Type=$type",
-    parameters,
-    options
-);
+result = cluster.query("SELECT x.* FROM `default` WHERE x.Type=$type", type="User")
+"""
 ----
 
 The complete code for this page's example can be found at xref:[??]
@@ -77,25 +76,27 @@ In most cases your query will return more than one result, and you may be lookin
 
 [source,python]
 ----
+"""
 var result = await collection.Query<dynamic>(
     "SELECT x.* FROM `default` WHERE x.Type=$1",
     parameters => parameters.Add("User"),
-    options => {}
+             options => {}
 );
 
 // check query was successful
 if (result.Status != QueryStatus.Success)
-{
+    {
     // error
 }
 
 // iterate over rows
 foreach (var row in result)
 {
-    // each row is an instance of the Query<T> call (eg dynamic or custom type
-    var name = row.username; // “mike”
-    Var age = row.age;
+// each row is an instance of the Query<T> call (eg dynamic or custom type
+var name = row.username; // “mike”
+Var age = row.age;
 }
+"""
 ----
 
 == Scan Consistency
@@ -114,6 +115,7 @@ Select this when consistency is always more important than performance.
 .ScanConsisteny (RYOW)
 [source,python]
 ----
+"""
 // create / update document (mutation)
 var upsertResult = await collection.Upsert("id", new { name = "Mike", type = "User" });
 
@@ -124,8 +126,9 @@ var state = MutationState.From(upsertResult);
 var result = await cluster.Query<dynamic>(
     "SELECT x.* FROM `default` WHERE x.Type=$1",
     parameters => parameters.Add("User"),
-    options => options.ConsistentWith(state)
+             options => options.ConsistentWith(state)
 );
+"""
 ----
 
 == Streaming Large Result Sets
@@ -145,3 +148,4 @@ Be sure to check that xref:concept-docs:http-services.adoc[your use case fits yo
 * For scaling up queries, be sure to xref:6.5@server:n1ql:n1ql-language-reference/index.adoc[read up on Indexes].
 * N1QL is for operational queries; for analytical workloads, read more on xref:concept-docs:http-services.adoc#Long-Running-Queries-&-Big-Data[when to choose CBAS], our implementation of SQL++.
 
+"""
