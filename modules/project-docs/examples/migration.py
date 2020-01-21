@@ -85,110 +85,106 @@ get_result = collection.get("airline_10")
 
 #end::simpleget[]
 
-Cluster cluster = Cluster.connect("127.0.0.1", "user", "pass");
-Bucket bucket = cluster.bucket("travel-sample");
-Collection collection = bucket.defaultCollection();
+cluster = Cluster.connect("127.0.0.1", ClusterOptions(PasswordAuthenticator("user", "pass")))
+bucket = cluster.bucket("travel-sample")
+collection = bucket.default_collection()
 
-{
-// #tag::upsertandget[]
-MutationResult upsertResult = collection.upsert("mydoc-id", JsonObject.create());
-GetResult getResult = collection.get("mydoc-id");
-// #end::upsertandget[]
-}
+#tag::upsertandget[]
+upsert_result = collection.upsert("mydoc-id", {})
+get_result = collection.get("mydoc-id")
+#end::upsertandget[]
+
+#natag::rawjson[]
+# TODO: update when implemented
+from couchbase.collection import UpsertOptions
+from couchbase_core.transcoder import Transcoder
+
+class RawJSONTranscoder(Transcoder):
+    pass
+
+content = "{}".encode("UTF_8")
+upsert_result = collection.upsert(
+    "mydoc-id",
+    content,
+    UpsertOptions(transcoder=RawJSONTranscoder))
+#naend::rawjson[]
+
+
+#tag::customtimeout[]
+# SDK 3 custom timeout
+get_result = collection.get(
+    "mydoc-id",
+    GetOptions(timeout=timedelta(seconds=5)))
+#end::customtimeout[]
+
+#tag::querysimple[]
+# SDK 3 simple query
+query_result = cluster.query("select * from `travel-sample` limit 10")
+for value in query_result:
+    #...
+    pass
+#end::querysimple[]
+
+
+# tag::queryparameterized[]
+# SDK 3 named parameters
+cluster.query(
+    "select * from bucket where type = $type",
+    QueryOptions(named_parameters={"type": "airport"}))
+
+# SDK 3 positional parameters
+cluster.query(
+    "select * from bucket where type = $1",
+    QueryOptions(positional_parameters=["airport"]))
+#end::queryparameterized[]
+
+#tag::analyticssimple[]
+# SDK 3 simple analytics query
+analytics_result = cluster.analytics_query("select * from dataset")
+for value in analytics_result:
+    #...
+    pass
+#end::analyticssimple[]
+
+#natag::analyticsparameterized[]
+# SDK 3 named parameters for analytics
+# TODO: enable when implemented, still offering old style *args, **kwargs interface
+cluster.analytics_query(
+        "select * from dataset where type = $type",
+        AnalyticsOptions(named_parameters={"type": 'airport'}))
+
+# SDK 3 positional parameters for analytics
+cluster.analytics_query(
+    "select * from dataset where type = $1",
+    AnalyticsOptions(position_paramters=["airport"]))
+#naend::analyticsparameterized[]
+
+
+#tag::analyticsparameterized_args_kwargs[]
+# SDK 3 named parameters for analytics
+# TODO: enable when implemented, still offering old style *args, **kwargs interface
+cluster.analytics_query(
+    "select * from dataset where type = $type",
+    type='airport')
+
+# SDK 3 positional parameters for analytics
+cluster.analytics_query(
+    "select * from dataset where type = $1",
+    ["airport"])
+#naend::analyticsparameterized_args_kwargs[]
+
+#tag::searchsimple[]
+# SDK 3 search query
+search_result = cluster.search_query(
+    "indexname",
+    "airports",
+    SearchOptions(timeout=timedelta(seconds=2),limit=5,fields=("a", "b", "c")))
+for row in search_result:
+    # ...
+    pass
+#end::searchsimple[]
 
 """
-
-
-    
-    {
-      // #tag::rawjson[]
-      byte[] content = "{}".getBytes(StandardCharsets.UTF_8);
-      MutationResult upsertResult = collection.upsert(
-        "mydoc-id",
-        content,
-        upsertOptions().transcoder(RawJsonTranscoder.INSTANCE)
-      );
-      // #end::rawjson[]
-    }
-
-    {
-      // #tag::customtimeout[]
-      // SDK 3 custom timeout
-      GetResult getResult = collection.get(
-        "mydoc-id",
-        getOptions().timeout(Duration.ofSeconds(5))
-      );
-      // #end::customtimeout[]
-    }
-
-    {
-      // #tag::querysimple[]
-      // SDK 3 simple query
-      QueryResult queryResult = cluster.query("select * from `travel-sample` limit 10");
-      for (JsonObject value : queryResult.rowsAsObject()) {
-// ...
-}
-      // #end::querysimple[]
-    }
-
-    {
-      // #tag::queryparameterized[]
-      // SDK 3 named parameters
-      cluster.query(
-    "select * from bucket where type = $type",
-        queryOptions().parameters(JsonObject.create().put("type", "airport"))
-      );
-
-      // SDK 3 positional parameters
-      cluster.query(
-    "select * from bucket where type = $1",
-        queryOptions().parameters(JsonArray.from("airport"))
-      );
-      // #end::queryparameterized[]
-}
-
-    {
-      // #tag::analyticssimple[]
-      // SDK 3 simple analytics query
-      AnalyticsResult analyticsResult = cluster.analyticsQuery("select * from dataset");
-      for (JsonObject value : analyticsResult.rowsAsObject()) {
-        // ...
-}
-      // #end::analyticssimple[]
-    }
-
-    {
-      // #tag::analyticsparameterized[]
-      // SDK 3 named parameters for analytics
-      cluster.analyticsQuery(
-        "select * from dataset where type = $type",
-        analyticsOptions().parameters(JsonObject.create().put("type", "airport"))
-      );
-
-      // SDK 3 positional parameters for analytics
-      cluster.analyticsQuery(
-        "select * from dataset where type = $1",
-        analyticsOptions().parameters(JsonArray.from("airport"))
-      );
-      // #end::analyticsparameterized[]
-    }
-
-    {
-      // #tag::searchsimple[]
-      // SDK 3 search query
-      SearchResult searchResult = cluster.searchQuery(
-    "indexname",
-        SearchQuery.queryString("airports"),
-        searchOptions()
-          .timeout(Duration.ofSeconds(2))
-          .limit(5)
-          .fields("a", "b", "c")
-);
-      for (SearchRow row : searchResult.rows()) {
-// ...
-}
-      // #end::searchsimple[]
-    }
 
     {
       // #tag::searchcheck[]
