@@ -184,33 +184,24 @@ for row in search_result:
     pass
 #end::searchsimple[]
 
-"""
-
-    {
-      // #tag::searchcheck[]
-      SearchResult searchResult = cluster.searchQuery(
+from couchbase_core.fulltext import Facet, TermFacet, DateFacet, NumericFacet
+#natag::searchcheck_args_kwargs[]
+search_result = cluster.search_query(
         "myindex",
-        SearchQuery.queryString("searchstring")
-      );
-      if (searchResult.metaData().errors().isEmpty()) {
-        // no errors present, so full data got returned
-      }
-      // #end::searchcheck[]
-    }
+        facets={'searchstring':Facet()}.queryString("searchstring"))
+if search_result.metadata().error_count()==0:
+    # no errors present, so full data got returned
+    pass
+#naend::searchcheck_args_kwargs[]
 
-    {
-      // #tag::viewquery[]
-      // SDK 3 view query
-      ViewResult viewResult = bucket.viewQuery(
-        "design",
-        "view",
-        viewOptions().limit(5).skip(2).timeout(Duration.ofSeconds(10))
-);
-      for (ViewRow row : viewResult.rows()) {
-                          // ...
-}
-      // #end::viewquery[]
-    }
-  }
-}
-"""
+from couchbase.bucket import ViewOptions
+#tag::viewquery[]
+# SDK 3 view query
+view_result = bucket.view_query(
+    "design",
+    "view",
+    ViewOptions(limit=5,skip=2,timeout=timedelta(seconds=10)))
+for row in view_result:
+    # ...
+    pass
+#end::viewquery[]
