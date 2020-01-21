@@ -21,11 +21,12 @@ include::6.5@sdk:shared:partial$migration.adoc[tag=terms]
 
 As an example here is a KeyValue document fetch:
 
-// change to $Your_language
 [source,python]
 ----
+
 from datetime import timedelta
 from couchbase.cluster import Cluster
+from couchbase.collection import GetOptions
 cluster=Cluster("couchbases://10.192.1.104")
 collection=cluster.default_collection()
 get_result = collection.get("key", GetOptions(timeout=timedelta(seconds=3)))
@@ -71,20 +72,21 @@ Please see the xref:sdk-release-notes.adoc[Release Notes] for up-to-date informa
  - discuss cert auth
  - discuss encryption config
 
-IMPORTANT: Java SDK 3.x has a minimum required Java version of 8, although we recommend running the latest LTS version (i.e. at the time of writing JDK 11) with the highest patch version available.
+IMPORTANT: Python SDK 3.x has a minimum required Python version of 3.0, although we recommend running the latest version (i.e. at the time of writing Python 3.8) with the highest patch version available.
 
 Note that the transitive dependency list has changed.
-As a refresher, Java SDK 2 depended on the following artifacts:
+As a refresher, Python SDK 2 depended on the following packages:
 
-* com.couchbase.client:**core-io**
-* io.reactivex:**rxjava**
-* io.opentracing:**opentracing-api**
+* **typing**
+* **Twisted**
+* **gevent**
 
 SDK 3 depends on the following ones instead:
 
-* com.couchbase.client:**core-io**
-* io.projectreactor:**reactor-core**
-* org.reactivestreams:**reactive-streams**
+* **typing** (on Python<3.7)
+* **typing-extensions** (on Python<3.8)
+* **boltons**
+* **pyrsistent**
 
 Note that the SDK now uses `Reactor` instead of `RxJava` and the explicit dependency on `OpenTracing` is gone.
 We are now providing support for different tracing backends with additional dependencies that can be pulled in as needed.
@@ -94,44 +96,45 @@ If you are pulling in the SDK through a package manager (recommended), all depen
 Otherwise please download the zip file and adjust your jar files accordingly.
 
 
-=== Configuring the Environment
+=== Configuring Collections
 
-The fundamental semantics of the `CouchbaseEnvironment` from SDK 2 remain the same, although somewhat more flexible, with its configuration cleaned up to be more easily discoverable.
-The `CouchbaseEnvironment` has been renamed to `ClusterEnvironment` and can be customized through a builder:
+The fundamental semantics of the `Bucket` from SDK 2 are analogous to that of the `Collection` in SDK 3.
 
-[source,java]
+[source,python]
 ----
-// SDK 2 custom KV timeout
-CouchbaseEnvironment env = DefaultCouchbaseEnvironment
-  .builder()
-  .kvTimeout(TimeUnit.SECONDS.toMillis(5))
-  .build();
+# SDK 2 custom KV timeout
+bucket = Bucket("couchbases://127.0.0.1/default")
+bucket.timeout=5
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=timeoutbuilder,indent=0]
+include::example$migrating.py[tag=timeoutbuilder,indent=0]
 ----
 
 Similar to SDK 2, if you create your own `ClusterEnvironment` the SDK will not shut it down for you -- you need to do this manually at the end of the program lifetime:
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=shutdown,indent=0]
+include::example$migrating.py[tag=shutdown,indent=0]
 ----
 
 If no custom environment is passed in, the default settings can still be customized through either the connection string or xref:ref:client-settings.adoc[system properties].
 The SDK has elaborate reflection logic in place to parse "flat" string values and apply them to the builder, which means that you can now configure more properties than in SDK 2.
 Note that the property paths have changed.
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=sysprops,indent=0]
+include::example$migrating.py[tag=sysprops,indent=0]
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=connstr,indent=0]
+include::example$migrating.py[tag=connstr,indent=0]
 ----
 
 The paths for each config start with the pattern `com.couchbase.env.` followed by either a toplevel or nested config. `IoConfig` is under the `io` path, similar to `TimeoutConfig` under `timeout`.
@@ -147,24 +150,27 @@ Since SDK 2 supports Couchbase Server clusters older than 5.0, it had to support
 The minimum cluster version supported by SDK 3 is Server 5.0, which means that only RBAC is supported.
 This is why you can set the username and password when directly connecting:
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=rbac,indent=0]
+include::example$migrating.py[tag=rbac,indent=0]
 ----
 
 This is just a shorthand for:
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=rbac-full,indent=0]
+include::example$migrating.py[tag=rbac-full,indent=0]
 ----
 
 The reason why you can pass in a specific authenticator is that you can also use the same approach to configure certificate-based authentication:
 
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=certauth,indent=0]
+include::example$migrating.py[tag=certauth,indent=0]
 ----
 
 Please see the xref:howtos:authentication.adoc[documentation on certificate-based authentication] for detailed information on how to configure this properly.
@@ -190,24 +196,26 @@ The reason behind this change is that even if a bucket can be opened, a millisec
 All this state has been moved into the actual operation so there is only a single place where the error handling needs to take place.
 This simplifies error handling and retry logic for an application.
 
-In SDK 2, you connected, opened a bucket, performed a KV op, and disconnected like this:
+In SDK 2, you connected, opened a bucket and performed a KV op like this:
 
-[source,java]
+[source,python]
+
 ----
-Cluster cluster = CouchbaseCluster.create("127.0.0.1");
-cluster.authenticate("user", "pass");
-Bucket bucket = cluster.openBucket("travel-sample");
+from couchbase_v2.cluster import Cluster as SDK2Cluster, PasswordAuthenticator
+cluster = SDK2Cluster("127.0.0.1")
+cluster.authenticate(PasswordAuthenticator("user", "pass"))
+bucket = cluster.open_bucket("travel-sample")
 
-JsonDocument getResult = bucket.get("airline_10");
+get_result = bucket.get("airline_10")
 
-cluster.disconnect();
 ----
 
 Here is the SDK 3 equivalent:
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=simpleget,indent=0]
+include::example$migrating.py[tag=simpleget,indent=0]
 ----
 
 `Collections` will be generally available with an upcoming Couchbase Server release, but the SDK already encodes it in its API to be future-proof.
@@ -235,28 +243,30 @@ In SDK 2 the main method to control transcoding was through providing different 
 This only worked for the KV APIs though -- Query, Search, Views, and other services exposed their JSON rows/hits in different ways.
 All of this has been unified in SDK 3 under a single concept: serializers and transcoders.
 
-By default, all KV APIs transcode to and from JSON -- you can also provide java POJOs which you couldn't in the past.
-`JsonObject` and `JsonArray` are still available, like in SDK 2:
+By default, all KV APIs transcode to and from JSON -- you can also provide Python Transcodable objects which you couldn't in the past.
 
-[source,java]
-----
-// SDK 2 upsert and get
-JsonDocument upsertResult = bucket.upsert(
-  JsonDocument.create("mydoc-id", JsonObject.empty())
-);
-JsonDocument getResult = bucket.get("mydoc-id");
-----
+[source,python]
 
-[source,java]
 ----
-include::example$Migrating.java[tag=upsertandget,indent=0]
+# SDK 2 upsert and get
+from couchbase_v2.bucket import Bucket as SDK2Bucket
+bucket=SDK2Bucket("couchbases://127.0.0.1/default")
+upsert_result = bucket.upsert("mydoc-id",{})
+get_result = bucket.get("mydoc-id")
 ----
 
-If you want to write already-encoded JSON, instead of using the `RawJsonDocument` you now need to use the `RawJsonTranscoder.INSTANCE`:
+[source,python]
 
-[source,java]
 ----
-include::example$Migrating.java[tag=rawjson,indent=0]
+include::example$migrating.py[tag=upsertandget,indent=0]
+----
+
+//If you want to write already-encoded JSON, instead of using the `RawJsonDocument` you now need to use the `RawJsonTranscoder.INSTANCE`:
+
+[source,python]
+
+----
+include::example$migrating.py[tag=rawjson,indent=0]
 ----
 
 Here is a mapping table from the SDK 2 `Document` types to the new transcoder types:
@@ -291,23 +301,24 @@ Usually there is no need to override it unless you want to provide your own impl
 
 == Exception Handling
 
-- discuss new exception hierachy in principle and how users should
+- discuss new exception hierarchy in principle and how users should
 approach it when migrating
 - explain maybe new error handling strategies that are in place,
 around retry strategies especially and their behavior
 
 How to _handle_ exceptions is unchanged from SDK 2.
-You should still use `try/catch` on the blocking APIs and the corresponding reactive/async methods on the other APIs.
+You should still use `try/catch` on the blocking APIs and the corresponding async methods on the other APIs.
 There have been changes made in the following areas:
 
-- Exception hierachy and naming.
+- Exception hierarchy and naming.
 - Proactive retry where possible.
 
 
-=== Exception hierachy
+=== Exception Hierarchy
 
-The exception hierachy is now flat and unified under a `CouchbaseException`.
-Each `CouchbaseException` has an associated `ErrorContext` which is populated with as much info as possible and then dumped alongside the stack trace if an error happens.
+The exception hierarchy is now unified under a `CouchbaseException`.
+// TODO: update after ErrorContexts exposed
+//Each `CouchbaseException` has an associated `ErrorContext` which is populated with as much info as possible and then dumped alongside the stack trace if an error happens.
 
 Here is an example of the error context if a N1QL query is performed with an invalid syntax (i.e. `select 1= from`):
 
@@ -452,15 +463,17 @@ All required params are still part of the method signature, making it clear what
 The timeout can be overridden on every operation and now takes a `Duration` from java 8.
 Compare SDK 2 and SDK 3 custom timeout setting:
 
-[source,java]
+[source,python]
+
 ----
 // SDK 2 custom timeout
 bucket.get("mydoc-id", 5, TimeUnit.SECONDS);
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=customtimeout,indent=0]
+include::example$migrating.py[tag=customtimeout,indent=0]
 ----
 
 In SDK 2, the `getFromReplica` method had a `ReplicaMode` argument which allowed to customize its behavior on how many replicas should be reached.
@@ -481,7 +494,8 @@ Similar functionality is available through `mutateIn` on JSON documents.
 
 N1QL querying is now available at the `Cluster` level instead of the bucket level, because you can also write N1QL queries that span multiple buckets. Compare a simple N1QL query from SDK 2 with its SDK 3 equivalent:
 
-[source,java]
+[source,python]
+
 ----
 // SDK 2 simple query
 N1qlQueryResult queryResult = bucket.query(N1qlQuery.simple("select * from `travel-sample` limit 10"));
@@ -491,15 +505,17 @@ for (N1qlQueryRow row : queryResult) {
 }
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=querysimple,indent=0]
+include::example$migrating.py[tag=querysimple,indent=0]
 ----
 
 Note that there is no `N1qlQuery.simple` any more -- parameter option have been moved to the `queryOptions()` for consistency reasons.
 The following shows how to do named and positional parameters in SDK 2, and their SDK 3 counterparts:
 
-[source,java]
+[source,python]
+
 ----
 // SDK 2 named parameters
 bucket.query(N1qlQuery.parameterized(
@@ -514,9 +530,10 @@ bucket.query(N1qlQuery.parameterized(
 ));
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=queryparameterized,indent=0]
+include::example$migrating.py[tag=queryparameterized,indent=0]
 ----
 
 If you want to use prepared statements, the `adhoc()` method is still available on the `QueryOptions`, alongside every other option that used to be exposed on the SDK 2 Query options.
@@ -544,7 +561,8 @@ This makes error handling much easier in both the blocking and non-blocking case
 
 While in SDK 2 you had to manually check for errors (otherwise you'd get an empty row collection):
 
-[source,java]
+[source,python]
+
 ----
 N1qlQueryResult queryResult = bucket.query(N1qlQuery.simple("select 1="));
 if (!queryResult.errors().isEmpty()) {
@@ -568,19 +586,22 @@ Not only does it throw a `CouchbaseException`, it also tries to map it to a spec
 Analytics querying, like N1QL, is also moved to the `Cluster` level: it is now accessible through the `Cluster.analyticsQuery` method.
 As with the Query service, parameters for the Analytics queries have moved into the `AnalyticsOptions`:
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=analyticssimple,indent=0]
+include::example$migrating.py[tag=analyticssimple,indent=0]
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=analyticsparameterized,indent=0]
+include::example$migrating.py[tag=analyticsparameterized,indent=0]
 ----
 
 Also, errors will now be thrown as top level exceptions and it is no longer necessary to explicitly check for errors:
 
-[source,java]
+[source,python]
+
 ----
 // SDK 2 error check
 AnalyticsQueryResult analyticsQueryResult = b1.query(AnalyticsQuery.simple("select * from foo"));
@@ -605,7 +626,8 @@ Also, similar to the other query APIs, it is now available at the `Cluster` leve
 
 Here is a SDK 2 Search query with some options, and its SDK 3 equivalent:
 
-[source,java]
+[source,python]
+
 ----
 //  SDK 2 search query
 SearchQueryResult searchResult = bucket.query(new SearchQuery(
@@ -619,9 +641,10 @@ for (SearchQueryRow row : searchResult.hits()) {
 }
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=searchsimple,indent=0]
+include::example$migrating.py[tag=searchsimple,indent=0]
 ----
 
 Error handling for streaming is handled differently.
@@ -639,9 +662,10 @@ com.couchbase.client.core.error.SearchIndexNotFoundException: The search index i
 
 If you want to be absolutely sure that you didn't get only partial data, you can check the error map:
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=searchcheck,indent=0]
+include::example$migrating.py[tag=searchcheck,indent=0]
 ----
 
 === Views
@@ -660,7 +684,8 @@ The API has stayed mostly the same, the most important change is that `staleness
 
 Compare this SDK 2 view query with its SDK 3 equivalent:
 
-[source,java]
+[source,python]
+
 ----
 // SDK 2 view query
 ViewResult query = bucket.query(
@@ -673,9 +698,10 @@ for (ViewRow row : query) {
 }
 ----
 
-[source,java]
+[source,python]
+
 ----
-include::example$Migrating.java[tag=viewquery,indent=0]
+include::example$migrating.py[tag=viewquery,indent=0]
 ----
 
 Exceptions are exclusively raised at the top level: for example, if the design document is not found:
