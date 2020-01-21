@@ -466,7 +466,7 @@ Compare SDK 2 and SDK 3 custom timeout setting:
 [source,python]
 
 ----
-// SDK 2 custom timeout
+# SDK 2 custom timeout
 bucket.get("mydoc-id", 5, TimeUnit.SECONDS);
 ----
 
@@ -497,8 +497,8 @@ N1QL querying is now available at the `Cluster` level instead of the bucket leve
 [source,python]
 
 ----
-// SDK 2 simple query
-N1qlQueryResult queryResult = bucket.query(N1qlQuery.simple("select * from `travel-sample` limit 10"));
+# SDK 2 simple query
+query_result = bucket.query(N1qlQuery.simple("select * from `travel-sample` limit 10"));
 for (N1qlQueryRow row : queryResult) {
   JsonObject value = row.value();
   // ...
