@@ -78,8 +78,6 @@ Note that the transitive dependency list has changed.
 As a refresher, Python SDK 2 depended on the following packages:
 
 * **typing**
-* **Twisted**
-* **gevent**
 
 SDK 3 depends on the following ones instead:
 
@@ -87,6 +85,11 @@ SDK 3 depends on the following ones instead:
 * **typing-extensions** (on Python<3.8)
 * **boltons**
 * **pyrsistent**
+
+Additionally these are supported optionally in SDK 2 and SDK 3.
+
+* **Twisted**
+* **gevent**
 
 Note that the SDK now uses `Reactor` instead of `RxJava` and the explicit dependency on `OpenTracing` is gone.
 We are now providing support for different tracing backends with additional dependencies that can be pulled in as needed.
@@ -766,7 +769,7 @@ Extra Java stuff to be ported if possible
 
 == Reactive and Async APIs
 
-The move to Java 8 as a baseline has opened the door to expose `CompletableFuture` in addition to a reactive API.
+The move to Python 3 as a baseline has opened the door to expose `CompletableFuture` in addition to a reactive API.
 You can now find it under the `async()` namespace of each level (for example, `Cluster.async()` -> `AsyncCluster`).
 We also moved from `RxJava` to `Reactor` because it provides native Java 8 support and better performance out of the box.
 `Reactor` has a growing community, and integrates very well into the Spring ecosystem.
