@@ -720,7 +720,7 @@ com.couchbase.client.core.error.ViewNotFoundException: The queried view is not f
  - where it is found, what exceptions it throws, etc.
 
 
-In SDK 2, the management APIs were centralized in the `ClusterManager` at the cluster level and the `BucketManager` at the bucket level.
+In SDK 2, the management APIs were centralized in the `Admin` class at the cluster level and the `BucketManager` class at the bucket level.
 Since SDK 3 provides more management APIs, they have been split up in their respective domains.
 So for example when in SDK 2 you needed to remove a bucket you would call `ClusterManager.removeBucket` you will now find it under `BucketManager.dropBucket`.
 Also, creating a N1QL index now lives in the `QueryIndexManager`, which is accessible through the `Cluster`.
@@ -730,40 +730,34 @@ The following table provides a mapping from the SDK 2 management APIs to those o
 .SDK 2.x vs SDK 3.x ClusterManager
 [options="header"]
 |====
-| SDK 2                          | SDK 3
-|`ClusterManager.info`           | removed
-|`ClusterManager.getBuckets`     | `BucketManager.getAllBuckets`
-|`ClusterManager.getBucket`      | `BucketManager.getBucket`
-|`ClusterManager.hasBucket`      | removed
-|`ClusterManager.insertBucket`   | `BucketManager.createBucket`
-|`ClusterManager.updateBucket`   | `BucketManager.updateBucket`
-|`ClusterManager.removeBucket`   | `BucketManager.dropBucket`
-|`ClusterManager.upsertUser`     | `UserManager.upsertUser`
-|`ClusterManager.removeUser`     | `UserManager.dropUser`
-|`ClusterManager.getUsers`       | `UserManager.getAllUsers`
-|`ClusterManager.getUser`        | `UserManager.getUser`
-|`ClusterManager.apiClient`      | removed
+| SDK 2                | SDK 3
+|`Admin.bucket_create` | `BucketManager.create_bucket`
+|`Admin.bucket_remove` | `BucketManager.drop_bucket`
+|`Admin.bucket_update` | `BucketManager.update_bucket`
+|`Admin.buckets_list`  | `BucketManager.get_all_buckets`
+|`Admin.bucket_info`   | `BucketManager.get_bucket`
+|`Admin.user_get`      | `UserManager.get_user`
+|`Admin.user_remove`   | `UserManager.drop_user`
+|`Admin.user_upsert`   | `UserManager.upsert_user`
+|`Admin.users_get`     | `UserManager.get_all_users`
 |====
 
 .SDK 2.x vs SDK 3.x BucketManager
 [options="header"]
 |====
-| SDK 2                                    | SDK 3
-|`BucketManager.info`                      | removed
-|`BucketManager.flush`                     | `BucketManager.flushBucket`
-|`BucketManager.getDesignDocuments`        | `ViewIndexManager.getAllDesignDocuments`
-|`BucketManager.getDesignDocument`         | `ViewIndexManager.getDesignDocument`
-|`BucketManager.insertDesignDocument`      | `ViewIndexManager.upsertDesignDocument`
-|`BucketManager.upsertDesignDocument`      | `ViewIndexManager.upsertDesignDocument`
-|`BucketManager.removeDesignDocument`      | `ViewIndexManager.dropDesignDocument`
-|`BucketManager.publishDesignDocument`     | `ViewIndexManager.publishDesignDocument`
-|`BucketManager.listN1qlIndexes`           | `QueryIndexManager.getAllIndexes`
-|`BucketManager.createN1qlIndex`           | `QueryIndexManager.createIndex`
-|`BucketManager.createN1qlPrimaryIndex`    | `QueryIndexManager.createPrimaryIndex`
-|`BucketManager.dropN1qlIndex`             | `QueryIndexManager.dropIndex`
-|`BucketManager.dropN1qlPrimaryIndex`      | `QueryIndexManager.dropPrimaryIndex`
-|`BucketManager.buildN1qlDeferredIndexes`  | `QueryIndexManager.buildDeferredIndexes`
-|`BucketManager.watchN1qlIndexes`          | `QueryIndexManager.watchIndexes`
+| SDK 2                                      | SDK 3
+| `BucketManager.design_create`              | `ViewIndexManager.upsert_design_document`
+| `BucketManager.design_delete`              | `ViewIndexManager.drop_design_document`
+| `BucketManager.design_get`                 | `ViewIndexManager.get_design_document`
+| `BucketManager.design_list`                | `ViewIndexManager.get_all_design_documents`
+| `BucketManager.design_publish`             | `ViewIndexManager.publish_design_document`
+| `BucketManager.n1ql_index_build_deferred`  | `QueryIndexManager.build_deferred_indexes`
+| `BucketManager.n1ql_index_create`          | `QueryIndexManager.create_index`
+| `BucketManager.n1ql_index_create_primary`  | `QueryIndexManager.create_primary_index`
+| `BucketManager.n1ql_index_drop`            | `QueryIndexManager.drop_index`
+| `BucketManager.n1ql_index_drop_primary`    | `QueryIndexManager.drop_primary_index`
+| `BucketManager.n1ql_index_list`            | `QueryIndexManager.get_all_indexes`
+| `BucketManager.n1ql_index_watch`           | `QueryIndexManager.watch_indexes`
 |====
 
 Extra Java stuff to be ported if possible
