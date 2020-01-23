@@ -36,7 +36,7 @@
 * xref:concept-docs:encryption.adoc[Field Level Encryption]
 * xref:concept-docs:data-services.adoc[Service Selection]
 
-.References
+.Reference
 https://docs.couchbase.com/sdk-api/couchbase-python-client[Python API Reference]
 
 .Project Docs
