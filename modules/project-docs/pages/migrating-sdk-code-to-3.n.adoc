@@ -476,7 +476,7 @@ bucket.get("mydoc-id", 5, TimeUnit.SECONDS);
 [source,python]
 
 ----
-include::example$migrating.py[tag=customtimeout,indent=0]
+include::example$migrating.py[tag=customtimeout;!test,indent=0]
 ----
 
 In SDK 2, the `getFromReplica` method had a `ReplicaMode` argument which allowed to customize its behavior on how many replicas should be reached.

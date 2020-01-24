@@ -94,6 +94,8 @@ upsert_result = collection.upsert("mydoc-id", {})
 get_result = collection.get("mydoc-id")
 #end::upsertandget[]
 
+import couchbase_tests.base
+
 #natag::rawjson[]
 # TODO: update when implemented
 from couchbase.collection import UpsertOptions
@@ -107,14 +109,20 @@ upsert_result = collection.upsert(
     "mydoc-id",
     content,
     UpsertOptions(transcoder=RawJSONTranscoder))
+
 #naend::rawjson[]
 
+class TimeoutTest(couchbase_tests.base.CollectionTestCase):
 
+    def test_customtimeout(self):
 #tag::customtimeout[]
 # SDK 3 custom timeout
-get_result = collection.get(
-    "mydoc-id",
-    GetOptions(timeout=timedelta(seconds=5)))
+        get_result = collection.get(
+            "mydoc-id",
+            GetOptions(timeout=timedelta(seconds=5)))
+        #tag::test[]
+        self.assertEquals("fish",get_result.content_as[str])
+        #end::test[]
 #end::customtimeout[]
 
 #tag::querysimple[]
