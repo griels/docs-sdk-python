@@ -91,12 +91,9 @@ Additionally these are supported optionally in SDK 2 and SDK 3.
 * **Twisted**
 * **gevent**
 
-Note that the SDK now uses `Reactor` instead of `RxJava` and the explicit dependency on `OpenTracing` is gone.
-We are now providing support for different tracing backends with additional dependencies that can be pulled in as needed.
-`ReactiveStreams` is a transitive dependency of `Reactor` and provides interoperability code so you can use other reactive streams implementations as well.
 
-If you are pulling in the SDK through a package manager (recommended), all dependencies will be resolved for you automatically.
-Otherwise please download the zip file and adjust your jar files accordingly.
+If you are pulling in the SDK through a package manager (recommended), all mandatory dependencies will be resolved for you automatically.
+
 
 
 === Configuring Collections
@@ -116,15 +113,7 @@ bucket.timeout=5
 include::example$migrating.py[tag=timeoutbuilder,indent=0]
 ----
 
-Similar to SDK 2, if you create your own `ClusterEnvironment` the SDK will not shut it down for you -- you need to do this manually at the end of the program lifetime:
-
-[source,python]
-
-----
-include::example$migrating.py[tag=shutdown,indent=0]
-----
-
-If no custom environment is passed in, the default settings can still be customized through either the connection string or xref:ref:client-settings.adoc[system properties].
+The default settings can still be customized through either the connection string or xref:ref:client-settings.adoc[system properties].
 The SDK has elaborate reflection logic in place to parse "flat" string values and apply them to the builder, which means that you can now configure more properties than in SDK 2.
 Note that the property paths have changed.
 
@@ -139,9 +128,6 @@ include::example$migrating.py[tag=sysprops,indent=0]
 ----
 include::example$migrating.py[tag=connstr,indent=0]
 ----
-
-The paths for each config start with the pattern `com.couchbase.env.` followed by either a toplevel or nested config. `IoConfig` is under the `io` path, similar to `TimeoutConfig` under `timeout`.
-So, if you want to modify a KV timeout you can use the `com.couchbase.env.timeout.kvTimeout` path.
 See the xref:ref:client-settings.adoc[configuration section] for full specifics.
 
 At the end of this guide you'll find a xref:#configurations-options-reference[reference] that describes the SDK 2 environment options and their SDK 3 equivalents where applicable.
@@ -184,12 +170,6 @@ Please see the xref:howtos:authentication.adoc[documentation on certificate-base
 - discuss bootstrapping
 - important: bootstrapping is now "lazy" so also discuss how to do the eager
 checks and any impact it might have on the first op being slow?
-- discuss shutdown
-- if external state is passed in optionally, discuss
-management of this state
-- discuss the impact of 6.5 "gcccp" and cluster level queries
-- SASL by default on non-PLAIN (if applicable)
-
 
 From a high-level perspective, bootstrapping and shutdown is very similar to SDK 2.
 One notable difference is that the `Collection` is introduced and that the individual methods like `bucket` immediately return, and do not throw an exception.
@@ -198,6 +178,14 @@ Compare SDK 2: the `openBucket` method would not work if it could not open the b
 The reason behind this change is that even if a bucket can be opened, a millisecond later it may not be available any more.
 All this state has been moved into the actual operation so there is only a single place where the error handling needs to take place.
 This simplifies error handling and retry logic for an application.
+
+- discuss shutdown
+- if external state is passed in optionally, discuss
+management of this state
+- discuss the impact of 6.5 "gcccp" and cluster level queries
+- SASL by default on non-PLAIN (if applicable)
+
+
 
 In SDK 2, you connected, opened a bucket and performed a KV op like this:
 
@@ -222,9 +210,9 @@ include::example$migrating.py[tag=simpleget,indent=0]
 ----
 
 `Collections` will be generally available with an upcoming Couchbase Server release, but the SDK already encodes it in its API to be future-proof.
-If you are using a Couchbase Server version which does not support `Collections`, always use the `defaultCollection()` method to access the KV API; it will map to the full bucket.
+If you are using a Couchbase Server version which does not support `Collections`, always use the `default_collection()` method to access the KV API; it will map to the full bucket.
 
-IMPORTANT: You'll notice that `bucket(String)` returns immediately, even if the bucket resources are not completely opened.
+IMPORTANT: You'll notice that `bucket(str)` returns immediately, even if the bucket resources are not completely opened.
 This means that the subsequent `get` operation may be dispatched even before the socket is open in the background.
 The SDK will handle this case transparently, and reschedule the operation until the bucket is opened properly.
 This also means that if a bucket could not be opened (say, because no server was reachable) the operation will time out.
@@ -251,11 +239,7 @@ By default, all KV APIs transcode to and from JSON -- you can also provide Pytho
 [source,python]
 
 ----
-# SDK 2 upsert and get
-from couchbase_v2.bucket import Bucket as SDK2Bucket
-bucket=SDK2Bucket("couchbases://127.0.0.1/default")
-upsert_result = bucket.upsert("mydoc-id",{})
-get_result = bucket.get("mydoc-id")
+include::example$migrating.py[tag=upsertandget_sdk2,indent=0]
 ----
 
 [source,python]
@@ -264,36 +248,14 @@ get_result = bucket.get("mydoc-id")
 include::example$migrating.py[tag=upsertandget,indent=0]
 ----
 
-//If you want to write already-encoded JSON, instead of using the `RawJsonDocument` you now need to use the `RawJsonTranscoder.INSTANCE`:
 
-[source,python]
+//[source,python]
+//
+//----
+//include::example$migrating.py[tag=rawjson,indent=0]
+//----
 
-----
-include::example$migrating.py[tag=rawjson,indent=0]
-----
 
-Here is a mapping table from the SDK 2 `Document` types to the new transcoder types:
-
-.SDK 2.x Document vs. SDK 3.x Transcoder
-[options="header"]
-|=======================
-| SDK 2                          | SDK 3
-|`JsonDocument`                  | `JsonTranscoder` (default)
-|`JsonArrayDocument`             | `JsonTranscoder` (default)
-|`JsonBooleanDocument`           | `JsonTranscoder` (default)
-|`JsonLongDocument`              | `JsonTranscoder` (default)
-|`JsonStringDocument`            | `JsonTranscoder` (default)
-|`JsonDoubleDocument`            | `JsonTranscoder` (default)
-|`LegacyDocument`                | removed
-|`RawJsonDocument`               | `RawJsonTranscoder`
-|`SerializableDocument`          | removed
-|`StringDocument`                | `RawStringTranscoder`
-|`ByteArrayDocument`             | `RawBinaryTranscoder`
-|`BinaryDocument`                | `RawBinaryTranscoder`
-|`EntityDocument`                | `JsonTranscoder` (default)
-|=======================
-
-The `LegacyDocument` in SDK 2 was in place to support SDK 1, so it has been removed.
 Serializers and transcoders can also be customized and overwritten on a per-operation basis, please see the appropriate documentation section for details.
 
 The JSON `Transcoders` use a `Serializer` underneath.
@@ -404,24 +366,24 @@ The following table describes the SDK 2 KV APIs and where they are now located i
 .SDK 2.x KV API vs. SDK 3.x KV API
 [options="header"]
 |====
-| SDK 2                          | SDK 3
-|`Bucket.upsert`                 | `Collection.upsert`
-|`Bucket.get`                    | `Collection.get`
-|`Bucket.exists`                 | `Collection.exists`
-|`Bucket.getFromReplica`         | `Collection.getAnyReplica` and `Collection.getAllReplicas`
-|`Bucket.getAndLock`             | `Collection.getAndLock`
-|`Bucket.getAndTouch`            | `Collection.getAndTouch`
-|`Bucket.insert`                 | `Collection.insert`
-|`Bucket.upsert`                 | `Collection.upsert`
-|`Bucket.replace`                | `Collection.replace`
-|`Bucket.remove`                 | `Collection.remove`
-|`Bucket.unlock`                 | `Collection.unlock`
-|`Bucket.touch`                  | `Collection.touch`
-|`Bucket.lookupIn`               | `Collection.lookupIn`
-|`Bucket.mutateIn`               | `Collection.mutateIn`
-|`Bucket.counter`                | `BinaryCollection.increment` and `BinaryCollection.decrement`
-|`Bucket.append`                 | `BinaryCollection.append`
-|`Bucket.prepend`                | `BinaryCollection.prepend`
+|SDK 2                    |SDK 3
+|`Bucket.upsert`          |`Collection.upsert`
+|`Bucket.get`             |`Collection.get`
+|`Bucket.exists`          |`Collection.exists`
+|`Bucket.get_from_replica`|`Collection.get_any_replica`and_`collection_get_all_replicas`
+|`Bucket.get_and_lock`    |`Collection.get_and_lock`
+|`Bucket.get_and_touch`   |`Collection.get_and_touch`
+|`Bucket.insert`          |`Collection.insert`
+|`Bucket.upsert`          |`Collection.upsert`
+|`Bucket.replace`         |`Collection.replace`
+|`Bucket.remove`          |`Collection.remove`
+|`Bucket.unlock`          |`Collection.unlock`
+|`Bucket.touch`           |`Collection.touch`
+|`Bucket.lookup_in`       |`Collection.lookup_in`
+|`Bucket.mutate_in`       |`Collection.mutate_in`
+|`Bucket.counter`         |`BinaryCollection.increment` and `BinaryCollection.decrement`
+|`Bucket.append`          |`BinaryCollection.append`
+|`Bucket.prepend`         |`BinaryCollection.prepend`
 |====
 
 In addition, the datastructure APIs have been renamed and moved:
@@ -429,7 +391,7 @@ In addition, the datastructure APIs have been renamed and moved:
 .Datastructure API Changes
 [options="header"]
 |====
-| SDK 2                   | SDK 3
+| SDK 2                          | SDK 3
 |`Bucket.mapAdd`                 | `Collection.map`
 |`Bucket.mapGet`                 | `Collection.map`
 |`Bucket.mapRemove`              | `Collection.map`
@@ -471,14 +433,14 @@ The timeout can be overridden on every operation and now takes a `datetime.timed
 include::example$migrating.py[tag=customtimeout,indent=0]
 ----
 
-In SDK 2, the `getFromReplica` method had a `ReplicaMode` argument which allowed to customize its behavior on how many replicas should be reached.
+In SDK 2, the `get_from_replica` method had a `ReplicaMode` argument which allowed to customize its behavior on how many replicas should be reached.
 We have identified this as a potential source of confusion and as a result split it up in two methods that simplify usage significantly.
 There is now a `getAllReplicas` method and a `getAnyReplica` method.
 
-* `getAllReplicas` asks the active node and all available replicas and returns the results as a stream.
-* `getAnyReplica` uses `getAllReplicas`, and returns the first result obtained.
+* `get_all_replicas` asks the active node and all available replicas and returns the results as a stream.
+* `get_any_replica` uses `get_all_replicas`, and returns the first result obtained.
 
-Unless you want to build some kind of consensus between the different replica responses, we recommend `getAnyReplica` for a fallback to a regular `get` when the active node times out.
+Unless you want to build some kind of consensus between the different replica responses, we recommend `get_any_replica` for a fallback to a regular `get` when the active node times out.
 
 NOTE: Operations which cannot be performed on JSON documents have been moved to the `BinaryCollection`, accessible through `Collection.binary()`.
 These operations include `append`, `prepend`, `increment`, and `decrement` (previously called `counter` in SDK 2).

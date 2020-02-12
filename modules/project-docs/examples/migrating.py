@@ -89,10 +89,19 @@ cluster = Cluster.connect("127.0.0.1", ClusterOptions(PasswordAuthenticator("use
 bucket = cluster.bucket("travel-sample")
 collection = bucket.default_collection()
 
-#tag::upsertandget[]
+# tag::upsertandget[]
 upsert_result = collection.upsert("mydoc-id", {})
 get_result = collection.get("mydoc-id")
-#end::upsertandget[]
+# end::upsertandget[]
+
+from couchbase_v2.bucket import Bucket
+
+# tag::upsertandget_sdk2[]
+# SDK 2 upsert and get
+bucket = Bucket("couchbases://127.0.0.1/default")
+upsert_result = bucket.upsert("mydoc-id", {})
+get_result = bucket.get("mydoc-id")
+# end::upsertandget_sdk2[]
 
 import couchbase_tests.base
 
