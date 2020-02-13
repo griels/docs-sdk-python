@@ -19,7 +19,7 @@ The simplest way to create a `Cluster` object is to call `Cluster.connect()` wit
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=simpleconnect,indent=0]
+include::example$managing_connections.py[tag=simpleconnect,indent=0]
 ----
 
 NOTE: If you are connecting to a version of Couchbase Server older than 6.5, it will be more efficient if the addresses are those of data (KV) nodes.
@@ -30,7 +30,7 @@ Multiple addresses may be specified in a connection string by delimiting them wi
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=multinodeconnect,indent=0]
+include::example$managing_connections.py[tag=multinodeconnect,indent=0]
 ----
 
 TIP: You don't need to include the address of every node in the cluster.
@@ -46,7 +46,7 @@ One way to customize the client's behavior is to build your own `ClusterEnvironm
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=customenv,indent=0]
+include::example$managing_connections.py[tag=customenv,indent=0]
 ----
 
 TIP: If you create a `Cluster` without specifying a custom environment, the client creates a default environment used exclusively by that `Cluster`.
@@ -102,7 +102,7 @@ If a single application needs to connect to multiple Couchbase Server clusters, 
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=shareclusterenvironment,indent=0]
+include::example$managing_connections.py[tag=shareclusterenvironment,indent=0]
 ----
 
 When you manually create a `ClusterEnvironment` like this, the SDK will not shut it down when you call `Cluster.disconnect()`.
@@ -126,7 +126,7 @@ On the client side, the externally visible ports must be used when connecting.
 If the external ports are not the default, you can specify custom ports using the overloaded `Cluster.connect()` method that takes a set of `SeedNode` objects instead of a connection string.
 
 // todo use the include (and uncomment in ManageingConnections.java) after next client snapshot is published
-// include::example$ManagingConnections.java[tag=seednodes,indent=0]
+// include::example$managing_connections.py[tag=seednodes,indent=0]
 [source,java]
 ----
 int customKvPort = 1234;
@@ -185,7 +185,7 @@ The next step is to enable encryption and pass it the path to the certificate fi
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=tls,indent=0]
+include::example$managing_connections.py[tag=tls,indent=0]
 ----
 
 Then use this custom `ClusterEnvironment` when opening the connection to the cluster.
@@ -214,7 +214,7 @@ In order to make the SDK actually use the SRV records, you need to enable DNS SR
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=dnssrv,indent=0]
+include::example$managing_connections.py[tag=dnssrv,indent=0]
 ----
 
 If the DNS SRV records could not be loaded properly you'll get the exception logged and the given host name will be used as a A record lookup.
@@ -256,19 +256,19 @@ So if you are connecting to the bucket synchronously but then want to switch ove
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=blockingtoasync,indent=0]
+include::example$managing_connections.py[tag=blockingtoasync,indent=0]
 ----
 
 On the other hand, you can use the Async API right from the beginning:
 // todo use tabs here?
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=asynccluster,indent=0]
+include::example$managing_connections.py[tag=asynccluster,indent=0]
 ----
 
 Here's the same example, but using the Reactive API instead of the Async API:
 
 [source,java]
 ----
-include::example$ManagingConnections.java[tag=reactivecluster,indent=0]
+include::example$managing_connections.py[tag=reactivecluster,indent=0]
 ----
