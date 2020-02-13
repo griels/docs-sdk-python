@@ -1,170 +1,140 @@
-import com.couchbase.client.core.env.IoConfig;
-import com.couchbase.client.core.env.SecurityConfig;
-import com.couchbase.client.core.env.TimeoutConfig;
-import com.couchbase.client.java.AsyncBucket;
-import com.couchbase.client.java.AsyncCluster;
-import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.Cluster;
-import com.couchbase.client.java.ClusterOptions;
-import com.couchbase.client.java.Collection;
-import com.couchbase.client.java.ReactiveBucket;
-import com.couchbase.client.java.ReactiveCluster;
-import com.couchbase.client.java.Scope;
-import com.couchbase.client.java.env.ClusterEnvironment;
+from couchbase.cluster import Cluster, ClusterOptions
+from couchbase_core.cluster import PasswordAuthenticator
 
-import java.nio.file.Paths;
-import java.time.Duration;
+class ManagingConnections(object):
+    def test_simpleconnect(self):
 
-public class ManagingConnections {
-  public static void main(String... args) {
+      #tag::simpleconnect[]
+      cluster = Cluster.connect("127.0.0.1", ClusterOptions(PasswordAuthenticator("username", "password")))
+      bucket = cluster.bucket("travel-sample")
+      collection = bucket.default_collection()
 
-    {
-      // #tag::simpleconnect[]
-      Cluster cluster = Cluster.connect("127.0.0.1", "username", "password");
-      Bucket bucket = cluster.bucket("travel-sample");
-      Collection collection = bucket.defaultCollection();
+      # You can access multiple buckets using the same Cluster object.
+      another_bucket = cluster.bucket("beer-sample")
 
-      // You can access multiple buckets using the same Cluster object.
-      Bucket anotherBucket = cluster.bucket("beer-sample");
+      # You can access collections other than the default
+      # if your version of Couchbase Server supports this feature.
+      customer_a = bucket.scope("customer-a");
+      widgets = customer_a.collection("widgets");
 
-      // You can access collections other than the default
-      // if your version of Couchbase Server supports this feature.
-      Scope customerA = bucket.scope("customer-a");
-      Collection widgets = customerA.collection("widgets");
-
-      // For a graceful shutdown, disconnect from the cluster when the program ends.
+      # For a graceful shutdown, disconnect from the cluster when the program ends.
       cluster.disconnect();
-      // #end::simpleconnect[]
-    }
-
-    {
-      // #tag::multinodeconnect[]
-      Cluster cluster = Cluster.connect("192.168.56.101,192.168.56.102", "username", "password");
-      // #end::multinodeconnect[]
-    }
+      #end::simpleconnect[]
 
 
-    {
-      // #tag::customenv[]
-      ClusterEnvironment env = ClusterEnvironment.builder()
-          // Customize client settings by calling methods on the builder
+    def test_multinodeconnect(self):
+      #tag::multinodeconnect[]
+      cluster = Cluster.connect("192.168.56.101,192.168.56.102", "username", "password")
+      #end::multinodeconnect[]
+
+
+    def test_customenv(self):
+      #tag::customenv[]
+      env = ClusterEnvironment.builder()
           .build();
+      # Customize client settings by calling methods on the builder
 
-      // Create a cluster using the environment's custom client settings.
-      Cluster cluster = Cluster.connect("127.0.0.1", ClusterOptions
+      # Create a cluster using the environment's custom client settings.
+      cluster = Cluster.connect("127.0.0.1", ClusterOptions
           .clusterOptions("username", "password")
-          .environment(env));
+          .environment(env))
 
-      // Shut down gracefully. Shut down the environment
-      // after all associated clusters are disconnected.
-      cluster.disconnect();
-      env.shutdown();
-      // #end::customenv[]
-    }
+      # Shut down gracefully. Shut down the environment
+      # after all associated clusters are disconnected.
+      cluster.disconnect()
+      env.shutdown()
+      #end::customenv[]
 
-    {
-      // #tag::shareclusterenvironment[]
-      ClusterEnvironment env = ClusterEnvironment.builder()
-          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofSeconds(5)))
-          .build();
 
-      Cluster clusterA = Cluster.connect(
+    def test_shareclusterenv(self):
+      #tag::shareclusterenvironment[]
+      env = ClusterEnvironment.builder()\
+          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofSeconds(5)))\
+          .build()
+
+      clusterA = Cluster.connect(
           "clusterA.example.com",
-          ClusterOptions.clusterOptions("username", "password")
+          ClusterOptions("username", "password")
               .environment(env));
 
-      Cluster clusterB = Cluster.connect(
+      clusterB = Cluster.connect(
           "clusterB.example.com",
-          ClusterOptions.clusterOptions("username", "password")
+          ClusterOptions("username", "password")
               .environment(env));
 
-      // ...
+      # ...
 
-      // For a graceful shutdown, disconnect from the clusters
-      // AND shut down the custom environment when then program ends.
+      # For a graceful shutdown, disconnect from the clusters
+      # AND shut down the custom environment when then program ends.
       clusterA.disconnect();
       clusterB.disconnect();
       env.shutdown();
-      // #end::shareclusterenvironment[]
-    }
+      #end::shareclusterenvironment[]
 
-    // todo use this example when beta 2 is released.
-//    {
-//      // #tag::seednodes[]
-//      int customKvPort = 12345;
-//      int customManagerPort = 23456;
-//      Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
-//          SeedNode.create("127.0.0.1",
-//              Optional.of(customKvPort),
-//              Optional.of(customManagerPort))));
-//
+#
+#     // todo use this example when beta 2 is released.
+# //    {
+# //      // #tag::seednodes[]
+# //      int customKvPort = 12345;
+# //      int customManagerPort = 23456;
+# //      Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
+# //          SeedNode.create("127.0.0.1",
+# //              Optional.of(customKvPort),
+# //              Optional.of(customManagerPort))));
+# //
+#
+# //      Cluster cluster = Cluster.connect(seedNodes, "username", "password");
+# //      // #end::customconnect[]
+# //    }
 
-//      Cluster cluster = Cluster.connect(seedNodes, "username", "password");
-//      // #end::customconnect[]
-//    }
+      #tag::connectionstringparams[]
+      cluster = Cluster.connect(
+          "127.0.0.1?io.maxHttpConnections=23&io.networkResolution=external", "username", "password")
+      #end::connectionstringparams[]
 
-    {
-      // #tag::connectionstringparams[]
-      Cluster cluster = Cluster.connect(
-          "127.0.0.1?io.maxHttpConnections=23&io.networkResolution=external", "username", "password");
-      // #end::connectionstringparams[]
-    }
+      #tag::blockingtoasync[]
+      cluster = Cluster.connect("127.0.0.1", "username", "password")
+      bucket = cluster.bucket("travel-sample");
 
-    {
-      // #tag::blockingtoasync[]
-      Cluster cluster = Cluster.connect("127.0.0.1", "username", "password");
-      Bucket bucket = cluster.bucket("travel-sample");
+      # Same API as Bucket, but completely async with CompletableFuture
+      asyncBucket = bucket.async()
 
-      // Same API as Bucket, but completely async with CompletableFuture
-      AsyncBucket asyncBucket = bucket.async();
-
-      // Same API as Bucket, but completely reactive with Flux and Mono
-      ReactiveBucket reactiveBucket = bucket.reactive();
+      # Same API as Bucket, but completely reactive with Flux and Mono
+      reactiveBucket = bucket.reactive()
 
       cluster.disconnect();
-      // #end::blockingtoasync[]
-    }
+      #end::blockingtoasync[]
 
-    {
-      // #tag::reactivecluster[]
-      ReactiveCluster cluster = ReactiveCluster.connect("127.0.0.1", "username", "password");
-      ReactiveBucket bucket = cluster.bucket("travel-sample");
+      #tag::reactivecluster[]
+      cluster = ReactiveCluster.connect("127.0.0.1", "username", "password")
+      bucket = cluster.bucket("travel-sample")
 
-      // A reactive cluster's disconnect methods returns a Mono<Void>.
-      // Nothing actually happens until you subscribe to the Mono.
-      // The simplest way to subscribe is to await completion by calling call `block()`.
+      # A reactive cluster's disconnect methods returns a Mono<Void>.
+      # Nothing actually happens until you subscribe to the Mono.
+      # The simplest way to subscribe is to await completion by calling call `block()`.
       cluster.disconnect().block();
-      // #end::reactivecluster[]
-    }
+      #end::reactivecluster[]
 
-    {
-      // #tag::asynccluster[]
-      AsyncCluster cluster = AsyncCluster.connect("127.0.0.1", "username", "password");
-      AsyncBucket bucket = cluster.bucket("travel-sample");
+      #tag::asynccluster[]
+      cluster = AsyncCluster.connect("127.0.0.1", "username", "password")
+      bucket = cluster.bucket("travel-sample")
 
-      // An async cluster's disconnect methods returns a CompletableFuture<Void>.
-      // The disconnection starts as soon as you call disconnect().
-      // The simplest way to wait for the disconnect to complete is to call `join()`.
+      # An async cluster's disconnect methods returns a CompletableFuture<Void>.
+      # The disconnection starts as soon as you call disconnect().
+      # The simplest way to wait for the disconnect to complete is to call `join()`.
       cluster.disconnect().join();
-      // #end::asynccluster[]
-    }
+      #end::asynccluster[]
 
 
-    {
-      // #tag::tls[]
-      ClusterEnvironment env = ClusterEnvironment.builder()
+      #tag::tls[]
+      env = ClusterEnvironment.builder()
           .securityConfig(SecurityConfig.enableTls(true)
               .trustCertificate(Paths.get("/path/to/cluster.cert")))
-          .build();
-      // #end::tls[]
-    }
+          .build()
+      #end::tls[]
 
-    {
-      // #tag::dnssrv[]
-      ClusterEnvironment env = ClusterEnvironment.builder()
+      #tag::dnssrv[]
+      env = ClusterEnvironment.builder()
           .ioConfig(IoConfig.enableDnsSrv(true))
           .build();
-      // #end::dnssrv[]
-    }
-  }
-}
+       #end::dnssrv[]
