@@ -134,6 +134,15 @@ class TimeoutTest(couchbase_tests.base.CollectionTestCase):
         #end::test[]
 #end::customtimeout[]
 
+from couchbase_v2.bucket import Bucket
+bucket=Bucket("couchbase://127.0.0.1")
+#tag::querysimple_sdk2[]
+# SDK 2 simple query
+query_result = bucket.query("select * from `travel-sample` limit 10")
+for row in query_result:
+    value = row.value
+#end::querysimple_sdk2[]
+
 #tag::querysimple[]
 # SDK 3 simple query
 query_result = cluster.query("select * from `travel-sample` limit 10")
@@ -142,9 +151,24 @@ for value in query_result:
     pass
 #end::querysimple[]
 
+from couchbase_v2.bucket import Bucket
+bucket=Bucket("couchbase://127.0.0.1")
+# tag::queryparameterized_sdk2[]
+# SDK 2 named parameters
+bucket.query(
+    "select * from bucket where type = $type",
+    type="airport")
+
+# SDK 2 positional parameters
+bucket.query(
+    "select * from bucket where type = $1",
+    "airport")
+
+del bucket
 
 # tag::queryparameterized[]
 # SDK 3 named parameters
+from couchbase.cluster import QueryOptions
 cluster.query(
     "select * from bucket where type = $type",
     QueryOptions(named_parameters={"type": "airport"}))
@@ -163,9 +187,9 @@ for value in analytics_result:
     pass
 #end::analyticssimple[]
 
-#natag::analyticsparameterized[]
+#tag::analyticsparameterized[]
+from couchbase.cluster import AnalyticsOptions
 # SDK 3 named parameters for analytics
-# TODO: enable when implemented, still offering old style *args, **kwargs interface
 cluster.analytics_query(
         "select * from dataset where type = $type",
         AnalyticsOptions(named_parameters={"type": 'airport'}))
@@ -173,8 +197,8 @@ cluster.analytics_query(
 # SDK 3 positional parameters for analytics
 cluster.analytics_query(
     "select * from dataset where type = $1",
-    AnalyticsOptions(position_paramters=["airport"]))
-#naend::analyticsparameterized[]
+    AnalyticsOptions(positional_parameters=["airport"]))
+#end::analyticsparameterized[]
 
 
 #tag::analyticsparameterized_args_kwargs[]
@@ -190,12 +214,21 @@ cluster.analytics_query(
     ["airport"])
 #naend::analyticsparameterized_args_kwargs[]
 
+#tag::analyticsparameterized_args_kwargs[]
+
+# SDK 2 error check
+analyticsQueryResult = cluster.query("select * from foo")
+if not analyticsQueryResult.errors():
+    # errors contain [{"msg":"Cannot find dataset foo in dataverse Default nor an alias with name foo! (in line 1, at column 15)","code":24045}]
+    pass
+
 #tag::searchsimple[]
 # SDK 3 search query
+from couchbase.cluster import SearchOptions
 search_result = cluster.search_query(
     "indexname",
     "airports",
-    SearchOptions(timeout=timedelta(seconds=2),limit=5,fields=("a", "b", "c")))
+    SearchOptions(timeout=timedelta(seconds=2),limit=5,fields=["a", "b", "c"]))
 for row in search_result:
     # ...
     pass
@@ -205,13 +238,15 @@ from couchbase_core.fulltext import Facet, TermFacet, DateFacet, NumericFacet
 #natag::searchcheck_args_kwargs[]
 search_result = cluster.search_query(
         "myindex",
-        facets={'searchstring':Facet()}.queryString("searchstring"))
+        facets={'searchstring':Facet(),queryString("searchstring")})#.)
 if search_result.metadata().error_count()==0:
     # no errors present, so full data got returned
     pass
 #naend::searchcheck_args_kwargs[]
 
 from couchbase.bucket import ViewOptions
+
+bucket=cluster.bucket("fred")
 #tag::viewquery[]
 # SDK 3 view query
 view_result = bucket.view_query(

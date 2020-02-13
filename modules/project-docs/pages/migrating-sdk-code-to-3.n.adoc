@@ -454,12 +454,7 @@ N1QL querying is now available at the `Cluster` level instead of the bucket leve
 [source,python]
 
 ----
-# SDK 2 simple query
-query_result = bucket.query(N1qlQuery.simple("select * from `travel-sample` limit 10"));
-for (N1qlQueryRow row : queryResult) {
-  JsonObject value = row.value();
-  // ...
-}
+include::example$migrating.py[tag=querysimple_sdk2,indent=0]
 ----
 
 [source,python]
@@ -474,17 +469,8 @@ The following shows how to do named and positional parameters in SDK 2, and thei
 [source,python]
 
 ----
-// SDK 2 named parameters
-bucket.query(N1qlQuery.parameterized(
-  "select * from bucket where type = $type",
-  JsonObject.create().put("type", "airport")
-));
+include::example$migrating.py[tag=queryparameterized_sdk2,indent=0]
 
-// SDK 2 positional parameters
-bucket.query(N1qlQuery.parameterized(
-  "select * from bucket where type = $1",
-  JsonArray.from("airport")
-));
 ----
 
 [source,python]
@@ -560,15 +546,12 @@ Also, errors will now be thrown as top level exceptions and it is no longer nece
 [source,python]
 
 ----
-// SDK 2 error check
-AnalyticsQueryResult analyticsQueryResult = b1.query(AnalyticsQuery.simple("select * from foo"));
-if (!analyticsQueryResult.errors().isEmpty()) {
-  // errors contain [{"msg":"Cannot find dataset foo in dataverse Default nor an alias with name foo! (in line 1, at column 15)","code":24045}]
-}
+include::example$migrating.py[tag=errorcheck_sdk2,indent=0]
 ----
 
 [source]
 ----
+include::example$migrating.py[tag=errorcheck,indent=0]
 // SDK 3 top level exception
 com.couchbase.client.core.error.DatasetNotFoundException: The analytics dataset is not found {"completed":true,"coreId":1,"errors":[{"code":24045,"message":"Cannot find dataset foo in dataverse Default nor an alias with name foo! (in line 1, at column 15)"}],"idempotent":false,"lastDispatchedFrom":"127.0.0.1:51942","lastDispatchedTo":"127.0.0.1:8095","requestId":5,"requestType":"AnalyticsRequest","retried":0,"service":{"operationId":"80265061-62e0-4c35-860f-a07a97e1a5ee","priority":0,"statement":"select * from foo","type":"analytics"},"timeoutMs":75000,"timings":{"dispatchMicros":27005,"totalMicros":89888}}
 	at com.couchbase.client.java.AsyncUtils.block(AsyncUtils.java:51)
