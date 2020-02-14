@@ -76,12 +76,9 @@ nodeA.example.com,nodeB.example.com
 ----
 
 The full list of recognized parameters is documented in the client settings reference.
-Any client setting with a system property name may also be specified as a connection string parameter (without the `com.couchbase.env.` prefix).
+Any client setting with a system property name may also be specified as a connection string parameter.
 
-WARNING: When creating a `Cluster` using a custom `ClusterEnvironment`, *_connection string parameters are ignored_*, since client settings are frozen when the cluster environment is built.
-
-A connection string may optionally be prefixed by either `"couchbase://"` or `"couchbases://"`, although the Java SDK completely ignores this prefix if present.
-If you wish to use TLS, the `ClusterEnvironment` must be configured as described in <<ssl>>.
+A connection string may optionally be prefixed by either `"couchbase://"` or `"couchbases://"`.
 
 [#connection-lifecycle]
 == Connection Lifecycle
@@ -95,11 +92,12 @@ If you know at startup time which buckets, scopes, and collections your applicat
 Before your application stops, gracefully shut down the client by calling the `disconnect()` method of each `Cluster` you created.
 If you created any `ClusterEnvironment` instances, call their `shutdown()` method after disconnecting the associated clusters.
 
+// not available from PYCBC/LCB yet AFAIK
+////
 [#multiple-clusters]
 == Connecting to Multiple Clusters
 
 If a single application needs to connect to multiple Couchbase Server clusters, we recommend creating a single `ClusterEnvironment` and sharing it between the `Clusters`:
-
 [source,java]
 ----
 include::example$managing_connections.py[tag=shareclusterenvironment,indent=0]
@@ -110,6 +108,7 @@ Instead you are responsible for shutting it down after disconnecting all cluster
 
 TIP: If you create a `Cluster` without specifying a custom environment, the client creates a default environment used exclusively by that `Cluster`.
 This default `ClusterEnvironment` is managed completely by the Java SDK, and is automatically shut down when the associated `Cluster` is disconnected.
+////
 
 [#alternate-addresses]
 == Alternate Addresses and Custom Ports
@@ -121,6 +120,7 @@ On the server side, each server node must be configured to advertise its externa
 This is done with the `setting-alternate-address` CLI command introduced in Couchbase Server 6.5.
 A node configured in this way will advertise two addresses: one for connecting from the same network, and another for connecting from an external network.
 // todo link to https://docs.couchbase.com/server/6.5/cli/cbcli/couchbase-cli-setting-alternate-address.html
+////
 
 On the client side, the externally visible ports must be used when connecting.
 If the external ports are not the default, you can specify custom ports using the overloaded `Cluster.connect()` method that takes a set of `SeedNode` objects instead of a connection string.
@@ -138,12 +138,12 @@ Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
 
 Cluster cluster = Cluster.connect(seedNodes, "username", "password");
 ----
-
 TIP: In a deployment that uses multi-dimensional scaling, a custom KV port is only applicable for nodes running the KV service.
 A custom manager port may be specified regardless of which services are running on the node.
 
 In many cases the client is able to automatically select the correct set of addresses to use when connecting to a cluster that advertises multiple addresses.
 If the detection heuristic fails in your environment, you can override it by setting the `io.networkResolution` client setting to `default` if the client and server are on the same network, or `external` if they're on different networks.
+////
 
 NOTE: Any TLS certificates must be set up at the point where the connections are being made.
 // todo what does that mean in practice? Also, should this be in the TLS docs section instead?
@@ -156,7 +156,7 @@ Couchbase Server Enterprise Edition supports full encryption of client-side traf
 That includes key-value type operations, queries, and configuration communication.
 Make sure you have the Enterprise Edition of Couchbase Server before proceeding with configuring encryption on the client side.
 
-To configure encryption for the Java SDK:
+To configure encryption for the Python SDK:
 
 . Get the CA certificate from the cluster and save it in a text file.
 . Enable encryption on the client side and point it to the file containing the certificate.
@@ -181,14 +181,14 @@ F4+FjEqAEIr1mQepDaNM0gEfVcgd2SzGhC3yhYFBAH//8W4DUot5ciEhoBs=
 -----END CERTIFICATE-----
 ----
 
-The next step is to enable encryption and pass it the path to the certificate file.
+The next step is to enable encryption by connecting to a cluster with the 'couchbases://' protocol in the connection string and pass it the path to the certificate file via an Authenticator, or via '?cert_path=...' in the connection string itself.
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=tls,indent=0]
 ----
 
-Then use this custom `ClusterEnvironment` when opening the connection to the cluster.
+Then use this custom `Cluster` when opening the connection to the cluster.
 See <<cluster-environment>> for an example of creating a `Cluster` with a custom environment.
 
 If you want to verify it's actually working, you can use a tool like [.cmd]`tcpdump`.
@@ -207,9 +207,11 @@ E.....@.@.............+....Z.'yZ..#........
 .%v.....4....m*...A.2I.1.&.*,6+..#..#.5
 ----
 
+////
+TODO: verify
 include::6.0@sdk:shared:partial$dnssrv-pars.adoc[tag=dnssrv]
 
-DNS SRV bootstrapping is available in the Java SDK from version 2.1.0.
+DNS SRV bootstrapping is available in the Python SDK from version 2.5.
 In order to make the SDK actually use the SRV records, you need to enable DNS SRV on the environment and pass in the host name from your records (here `example.com`):
 
 [source,java]
@@ -233,6 +235,7 @@ Also, if you pass in more than one node, DNS SRV bootstrap will not be initiated
 INFO: DNS SRV enabled, but less or more than one seed node given.
 Proceeding with normal bootstrap.
 ----
+////
 
 == Async and Reactive APIs
 

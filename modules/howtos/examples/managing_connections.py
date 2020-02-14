@@ -127,10 +127,7 @@ class ManagingConnections(object):
 
 
       #tag::tls[]
-      env = ClusterEnvironment.builder()
-          .securityConfig(SecurityConfig.enableTls(true)
-              .trustCertificate(Paths.get("/path/to/cluster.cert")))
-          .build()
+      cluster = Cluster("couchbases://127.0.0.1",ClusterOptions(PasswordAuthenticator("username","password",cert_path="/path/to/cluster.cert")))
       #end::tls[]
 
       #tag::dnssrv[]
