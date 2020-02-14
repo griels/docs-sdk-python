@@ -36,9 +36,10 @@ include::example$managing_connections.py[tag=multinodeconnect,indent=0]
 TIP: You don't need to include the address of every node in the cluster.
 The client fetches the full address list from the first node it is able to contact.
 
-
-[#cluster-environment]
-== Cluster Environment
+////
+N/A for Python currently
+[#cluster-settings]
+== Cluster Settings
 
 A `ClusterEnvironment` manages shared resources like thread pools, timers, and schedulers.
 It also holds the client settings.
@@ -48,9 +49,7 @@ One way to customize the client's behavior is to build your own `ClusterEnvironm
 ----
 include::example$managing_connections.py[tag=customenv,indent=0]
 ----
-
-TIP: If you create a `Cluster` without specifying a custom environment, the client creates a default environment used exclusively by that `Cluster`.
-This default `ClusterEnvironment` is managed completely by the Java SDK, and is automatically shut down when the associated `Cluster` is disconnected.
+////
 
 [#connection-strings]
 == Connection Strings
@@ -72,7 +71,7 @@ nodeA.example.com,nodeB.example.com
 
 .Connection string with two parameters
 ----
-127.0.0.1?io.networkResolution=external&timeout.kvTimeout=10s
+couchbases://127.0.0.1?compression=inout&redaction
 ----
 
 The full list of recognized parameters is documented in the client settings reference.
@@ -84,13 +83,16 @@ A connection string may optionally be prefixed by either `"couchbase://"` or `"c
 == Connection Lifecycle
 
 Most of the high-level classes in the Java SDK are designed to be safe for concurrent use by multiple threads.
-You will get the best performance if you share and reuse instances of `ClusterEnvironment`, `Cluster`, `Bucket`, `Scope`, and `Collection`, all of which are thread-safe.
+For asynchronous modes, you will get the best performance if you share and reuse instances of `Cluster`, `Bucket`, `Scope`, and `Collection`, all of which are thread-safe. For synchronous
 
 We recommend creating a single `Cluster` instance when your application starts up, and sharing this instance throughout your application.
 If you know at startup time which buckets, scopes, and collections your application will use, we recommend obtaining them from the `Cluster` at startup time and sharing those instances throughout your application as well.
 
+////
+I believe PYCBC does this automatically when the Client object is destroyed, but we are apparently offering this explicitly in future.
 Before your application stops, gracefully shut down the client by calling the `disconnect()` method of each `Cluster` you created.
 If you created any `ClusterEnvironment` instances, call their `shutdown()` method after disconnecting the associated clusters.
+////
 
 // not available from PYCBC/LCB yet AFAIK
 ////
@@ -164,7 +166,7 @@ To configure encryption for the Python SDK:
 It is important to make sure you are transferring the certificate in an encrypted manner from the server to the client side, so either copy it through SSH or through a similar secure mechanism.
 
 If you are running on `localhost` and just want to enable TLS for a development machine, just copying and pasting it suffices.
-Navigate in the admin UI to menu:Settings[Cluster] and copy the input box of the TLS certificate into a file on your machine (which we will refer to as `cluster.cert`).
+Navigate in the admin UI to menu:Settings[Cluster] and copy the input box of the TLS certificate into a file on your machine (which we will refer to as `cluster.crt`).
 It looks similar to this:
 
 ----
@@ -242,18 +244,14 @@ Proceeding with normal bootstrap.
 The Couchbase Java SDK provides first-class support for asynchronous and reactive programming.
 In fact, the synchronous API is just a thin wrapper around the asynchronous API.
 
-Methods in the asynchronous API return instances of the standard `CompletableFuture` introduced in Java 8.
+Methods in the asynchronous API return instances of the relevant Async API:
 
-The Java SDK's reactive API is built on link:https://projectreactor.io[Project Reactor].
-Reactor implements the standard Reactive Streams API introduced in Java 9, and extends it with a rich set of useful operators.
-Methods in the reactive API return instances of `Flux` or `Mono`.
+1. `Future` for asyncio (`acouchbase.bucket.Bucket` supplies the relevant Bucket object)
+2. `Deferred` for Twisted (to be added for SDK3)
+3. For GEvent, the 'synchronous' return value is supplied to the calling greenlet code (to be added for SDK3)
 
-If you wish to embrace the async or reactive programming model, there are two ways to get started:
-
-* Call `async()` or `reactive()` on the object to access its `Async*` or `Reactive*` counterpart.
-For example, if you have a `Collection` called `myCollection`, you can obtain a `ReactiveCollection` by calling `myCollection.reactive()`.
-* Instantiate an `AsyncCluster` or `ReactiveCluster` in the first place.
-The `bucket()` method of an `AsyncCluster` returns an `AsyncBucket`, while the `bucket()` method of a `ReactiveCluster` turns a `ReactiveBucket`.
+////
+TODO: write up pending https://issues.couchbase.com/browse/PYCBC-805 etc
 
 So if you are connecting to the bucket synchronously but then want to switch over to asynchronous data operations, you can do it like this:
 
@@ -275,3 +273,4 @@ Here's the same example, but using the Reactive API instead of the Async API:
 ----
 include::example$managing_connections.py[tag=reactivecluster,indent=0]
 ----
+////
