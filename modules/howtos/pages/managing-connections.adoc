@@ -83,7 +83,7 @@ A connection string may optionally be prefixed by either `"couchbase://"` or `"c
 == Connection Lifecycle
 
 Most of the high-level classes in the Java SDK are designed to be safe for concurrent use by multiple threads.
-For asynchronous modes, you will get the best performance if you share and reuse instances of `Cluster`, `Bucket`, `Scope`, and `Collection`, all of which are thread-safe. For synchronous
+For asynchronous modes, you will get the best performance if you share and reuse instances of `Cluster`, `Bucket`, `Scope`, and `Collection`, all of which are thread-safe. For synchronous mode, it is better to use separate instances in different threads.
 
 We recommend creating a single `Cluster` instance when your application starts up, and sharing this instance throughout your application.
 If you know at startup time which buckets, scopes, and collections your application will use, we recommend obtaining them from the `Cluster` at startup time and sharing those instances throughout your application as well.
@@ -239,9 +239,9 @@ Proceeding with normal bootstrap.
 ----
 ////
 
-== Async and Reactive APIs
+== Async APIs
 
-The Couchbase Java SDK provides first-class support for asynchronous and reactive programming.
+The Couchbase Python SDK provides first-class support for asynchronous programming.
 In fact, the synchronous API is just a thin wrapper around the asynchronous API.
 
 Methods in the asynchronous API return instances of the relevant Async API:
