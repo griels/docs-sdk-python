@@ -14,12 +14,13 @@ class ManagingConnections(object):
 
       # You can access collections other than the default
       # if your version of Couchbase Server supports this feature.
-      customer_a = bucket.scope("customer-a");
-      widgets = customer_a.collection("widgets");
+      customer_a = bucket.scope("customer-a")
+      widgets = customer_a.collection("widgets")
+
+      #end::simpleconnect[]
 
       # For a graceful shutdown, disconnect from the cluster when the program ends.
-      cluster.disconnect();
-      #end::simpleconnect[]
+      cluster.disconnect()
 
 
     def test_multinodeconnect(self):
@@ -76,14 +77,14 @@ class ManagingConnections(object):
 # //    {
 # //      // #tag::seednodes[]
 # //      int customKvPort = 12345;
-# //      int customManagerPort = 23456;
+# //      int customManagerPort = 23456
 # //      Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
 # //          SeedNode.create("127.0.0.1",
 # //              Optional.of(customKvPort),
-# //              Optional.of(customManagerPort))));
+# //              Optional.of(customManagerPort))))
 # //
 #
-# //      Cluster cluster = Cluster.connect(seedNodes, "username", "password");
+# //      Cluster cluster = Cluster.connect(seedNodes, "username", "password")
 # //      // #end::customconnect[]
 # //    }
 
@@ -94,7 +95,7 @@ class ManagingConnections(object):
 
       #tag::blockingtoasync[]
       cluster = Cluster.connect("127.0.0.1", "username", "password")
-      bucket = cluster.bucket("travel-sample");
+      bucket = cluster.bucket("travel-sample")
 
       # Same API as Bucket, but completely async with CompletableFuture
       asyncBucket = bucket.async()
@@ -102,7 +103,7 @@ class ManagingConnections(object):
       # Same API as Bucket, but completely reactive with Flux and Mono
       reactiveBucket = bucket.reactive()
 
-      cluster.disconnect();
+      cluster.disconnect()
       #end::blockingtoasync[]
 
       #tag::reactivecluster[]
@@ -123,7 +124,7 @@ class ManagingConnections(object):
       # An async cluster's disconnect methods returns a CompletableFuture<Void>.
       # The disconnection starts as soon as you call disconnect().
       # The simplest way to wait for the disconnect to complete is to call `join()`.
-      cluster.disconnect().join();
+      cluster.disconnect().join()
       #end::asynccluster[]
 
 
@@ -134,5 +135,5 @@ class ManagingConnections(object):
       #tag::dnssrv[]
       env = ClusterEnvironment.builder()
           .ioConfig(IoConfig.enableDnsSrv(true))
-          .build();
+          .build()
        #end::dnssrv[]
