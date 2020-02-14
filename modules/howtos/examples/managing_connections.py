@@ -106,17 +106,18 @@ class ManagingConnections(object):
       #end::blockingtoasync[]
 
       #tag::reactivecluster[]
-      cluster = ReactiveCluster.connect("127.0.0.1", "username", "password")
+      from acouchbase.bucket import Bucket
+      cluster = Cluster("127.0.0.1", ClusterOptions(PasswordAuthenticator("username", "password")),bucket_class=Bucket)
       bucket = cluster.bucket("travel-sample")
 
       # A reactive cluster's disconnect methods returns a Mono<Void>.
       # Nothing actually happens until you subscribe to the Mono.
       # The simplest way to subscribe is to await completion by calling call `block()`.
-      cluster.disconnect().block();
+      cluster.disconnect()
       #end::reactivecluster[]
 
       #tag::asynccluster[]
-      cluster = AsyncCluster.connect("127.0.0.1", "username", "password")
+      cluster = Cluster.connect("127.0.0.1", ClusterOptions(PasswordAuthenticator("username", "password")))
       bucket = cluster.bucket("travel-sample")
 
       # An async cluster's disconnect methods returns a CompletableFuture<Void>.
@@ -127,7 +128,7 @@ class ManagingConnections(object):
 
 
       #tag::tls[]
-      cluster = Cluster("couchbases://127.0.0.1",ClusterOptions(PasswordAuthenticator("username","password",cert_path="/path/to/cluster.cert")))
+      cluster = Cluster("couchbases://127.0.0.1",ClusterOptions(PasswordAuthenticator("username","password",cert_path="/path/to/cluster.crt")))
       #end::tls[]
 
       #tag::dnssrv[]
