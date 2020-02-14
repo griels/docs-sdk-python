@@ -1,4 +1,4 @@
-= Managing Connections using the Java SDK with Couchbase Server
+= Managing Connections using the Python SDK with Couchbase Server
 :navtitle: Managing Connections
 :page-topic-type: concept
 :page-aliases: ROOT:managing-connections,howtos:multi-network,ROOT:connecting,ROOT:connection-advanced
@@ -8,7 +8,7 @@ include::partial$beta-warning.adoc[]
 Please also refer to the xref:6.5@server:learn:security/authorization-overview.adoc[Server docs].
 
 [abstract]
-This section describes how to connect the Java SDK to a Couchbase cluster.
+This section describes how to connect the Python SDK to a Couchbase cluster.
 It contains best practices as well as information on TLS/SSL and other advanced connection options.
 
 == Connecting to a Cluster
@@ -17,7 +17,7 @@ A connection to a Couchbase Server cluster is represented by a `Cluster` object.
 A `Cluster` provides access to Buckets, Scopes, and Collections, as well as various Couchbase services and management interfaces.
 The simplest way to create a `Cluster` object is to call `Cluster.connect()` with a <<connection-strings, connection string>>, username, and password:
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=simpleconnect,indent=0]
 ----
@@ -28,7 +28,7 @@ You will in any case, with 6.0 and earlier, need to open a ``Bucket` instance be
 In a production environment, your connection string should include the addresses of multiple server nodes in case some are currently unavailable.
 Multiple addresses may be specified in a connection string by delimiting them with commas:
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=multinodeconnect,indent=0]
 ----
@@ -45,7 +45,7 @@ A `ClusterEnvironment` manages shared resources like thread pools, timers, and s
 It also holds the client settings.
 One way to customize the client's behavior is to build your own `ClusterEnvironment` with custom settings:
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=customenv,indent=0]
 ----
@@ -82,7 +82,7 @@ A connection string may optionally be prefixed by either `"couchbase://"` or `"c
 [#connection-lifecycle]
 == Connection Lifecycle
 
-Most of the high-level classes in the Java SDK are designed to be safe for concurrent use by multiple threads.
+Most of the high-level classes in the Python SDK are designed to be safe for concurrent use by multiple threads.
 For asynchronous modes, you will get the best performance if you share and reuse instances of `Cluster`, `Bucket`, `Scope`, and `Collection`, all of which are thread-safe. For synchronous mode, it is better to use separate instances in different threads.
 
 We recommend creating a single `Cluster` instance when your application starts up, and sharing this instance throughout your application.
@@ -100,7 +100,7 @@ If you created any `ClusterEnvironment` instances, call their `shutdown()` metho
 == Connecting to Multiple Clusters
 
 If a single application needs to connect to multiple Couchbase Server clusters, we recommend creating a single `ClusterEnvironment` and sharing it between the `Clusters`:
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=shareclusterenvironment,indent=0]
 ----
@@ -109,7 +109,7 @@ When you manually create a `ClusterEnvironment` like this, the SDK will not shut
 Instead you are responsible for shutting it down after disconnecting all clusters that share the environment.
 
 TIP: If you create a `Cluster` without specifying a custom environment, the client creates a default environment used exclusively by that `Cluster`.
-This default `ClusterEnvironment` is managed completely by the Java SDK, and is automatically shut down when the associated `Cluster` is disconnected.
+This default `ClusterEnvironment` is managed completely by the Python SDK, and is automatically shut down when the associated `Cluster` is disconnected.
 ////
 
 [#alternate-addresses]
@@ -127,9 +127,9 @@ A node configured in this way will advertise two addresses: one for connecting f
 On the client side, the externally visible ports must be used when connecting.
 If the external ports are not the default, you can specify custom ports using the overloaded `Cluster.connect()` method that takes a set of `SeedNode` objects instead of a connection string.
 
-// todo use the include (and uncomment in ManageingConnections.java) after next client snapshot is published
+// todo use the include (and uncomment in ManageingConnections.python) after next client snapshot is published
 // include::example$managing_connections.py[tag=seednodes,indent=0]
-[source,java]
+[source,python]
 ----
 int customKvPort = 1234;
 int customManagerPort = 2345;
@@ -216,7 +216,7 @@ include::6.0@sdk:shared:partial$dnssrv-pars.adoc[tag=dnssrv]
 DNS SRV bootstrapping is available in the Python SDK from version 2.5.
 In order to make the SDK actually use the SRV records, you need to enable DNS SRV on the environment and pass in the host name from your records (here `example.com`):
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=dnssrv,indent=0]
 ----
@@ -225,10 +225,10 @@ If the DNS SRV records could not be loaded properly you'll get the exception log
 
 ----
 WARNING: DNS SRV lookup failed, proceeding with normal bootstrap.
-javax.naming.NameNotFoundException: DNS name not found [response code 3];
+pythonx.naming.NameNotFoundException: DNS name not found [response code 3];
    remaining name '_couchbase._tcp.example.com'
-	at com.sun.jndi.dns.DnsClient.checkResponseCode(DnsClient.java:651)
-	at com.sun.jndi.dns.DnsClient.isMatchResponse(DnsClient.java:569)
+	at com.sun.jndi.dns.DnsClient.checkResponseCode(DnsClient.python:651)
+	at com.sun.jndi.dns.DnsClient.isMatchResponse(DnsClient.python:569)
 ----
 
 Also, if you pass in more than one node, DNS SRV bootstrap will not be initiated:
@@ -255,21 +255,21 @@ TODO: write up pending https://issues.couchbase.com/browse/PYCBC-805 etc
 
 So if you are connecting to the bucket synchronously but then want to switch over to asynchronous data operations, you can do it like this:
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=blockingtoasync,indent=0]
 ----
 
 On the other hand, you can use the Async API right from the beginning:
 // todo use tabs here?
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=asynccluster,indent=0]
 ----
 
 Here's the same example, but using the Reactive API instead of the Async API:
 
-[source,java]
+[source,python]
 ----
 include::example$managing_connections.py[tag=reactivecluster,indent=0]
 ----
